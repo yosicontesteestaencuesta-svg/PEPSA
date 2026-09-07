@@ -4,7 +4,50 @@ from datetime import datetime
 
 st.set_page_config(page_title="V°B° Películas Plásticas", layout="wide")
 
-# Inicializar almacenamiento en memoria si no existe
+# CSS personalizado para fondo blanco, texto azul marino y casillas seleccionadas en verde
+st.markdown("""
+    <style>
+    /* Fondo principal blanco */
+    .stApp {
+        background-color: #FFFFFF;
+        color: #1F4E78;
+    }
+    
+    /* Textos, títulos y encabezados en Azul Marino */
+    h1, h2, h3, h4, h5, h6, label, p, span, div {
+        color: #1F4E78 !important;
+    }
+
+    /* Estilo para las casillas de verificación (checkboxes) */
+    div[data-baseweb="checkbox"] span:first-child {
+        border-color: #1F4E78 !important;
+    }
+    
+    /* Pintar de verde la casilla seleccionada */
+    div[data-baseweb="checkbox"] [aria-checked="true"] {
+        background-color: #28A745 !important;
+        border-color: #28A745 !important;
+    }
+
+    /* Fondo de inputs y cajas de texto */
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"], .stTextArea textarea {
+        background-color: #F8F9FA !important;
+        color: #1F4E78 !important;
+        border: 1px solid #1F4E78 !important;
+    }
+
+    /* Estilo del recuadro de Criterio de Paro */
+    .paro-box {
+        background-color: #E8F4F8;
+        border-left: 5px solid #1F4E78;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Inicializar almacenamiento en sesión si no existe
 if "registros" not in st.session_state:
     st.session_state.registros = []
 
@@ -44,26 +87,26 @@ with tab_captura:
         
         with c1:
             st.markdown("**Soporte / Presentación**")
-            carta = st.checkbox(f"Carta Laminada", key=f"{prefix}_carta")
-            sin_lam = st.checkbox(f"Sin Laminar", key=f"{prefix}_sin_lam")
+            carta = st.checkbox("Carta Laminada", key=f"{prefix}_carta")
+            sin_lam = st.checkbox("Sin Laminar", key=f"{prefix}_sin_lam")
             
         with c2:
             st.markdown("**Elementos de Referencia**")
-            p_dig = st.checkbox(f"Pantone Digital", key=f"{prefix}_p_dig")
-            p_fis = st.checkbox(f"Pantone Físico", key=f"{prefix}_p_fis")
-            m_cli = st.checkbox(f"Muestra Cliente", key=f"{prefix}_m_cli")
-            p_col = st.checkbox(f"Prueba de Color", key=f"{prefix}_p_col")
+            p_dig = st.checkbox("Pantone Digital", key=f"{prefix}_p_dig")
+            p_fis = st.checkbox("Pantone Físico", key=f"{prefix}_p_fis")
+            m_cli = st.checkbox("Muestra Cliente", key=f"{prefix}_m_cli")
+            p_col = st.checkbox("Prueba de Color", key=f"{prefix}_p_col")
             
         with c3:
             st.markdown("**Criterio y Mediciones**")
-            c_cert = st.checkbox(f"Color Cert", key=f"{prefix}_c_cert")
-            delta = st.number_input(f"Delta Máx", min_value=0.0, value=1.5, step=0.1, key=f"{prefix}_delta")
-            prioridad = st.radio(f"Prioridad", ["Apariencia", "Medición"], horizontal=True, key=f"{prefix}_prio")
+            c_cert = st.checkbox("Color Cert", key=f"{prefix}_c_cert")
+            delta = st.number_input("Delta Máx", min_value=0.0, value=1.5, step=0.1, key=f"{prefix}_delta")
+            prioridad = st.radio("Prioridad", ["Apariencia", "Medición"], horizontal=True, key=f"{prefix}_prio")
 
         with c4:
             st.markdown("**Dictamen**")
-            resultado = st.selectbox(f"Resultado", ["ACEPTABLE", "AJUSTABLE", "RECHAZADO"], key=f"{prefix}_res")
-            notas = st.text_area(f"Notas / Observaciones", height=68, key=f"{prefix}_notas")
+            resultado = st.selectbox("Resultado", ["ACEPTABLE", "AJUSTABLE", "RECHAZADO"], key=f"{prefix}_res")
+            notas = st.text_area("Notas / Observaciones", height=68, key=f"{prefix}_notas")
 
         return {
             f"Res_{title}": resultado,
@@ -78,7 +121,7 @@ with tab_captura:
     res_textos = render_eval_section("TEXTOS", "txt")
     st.divider()
 
-    # --- SECCIÓN HERRAMENTAL ---
+    # --- SECCIÓN HERRAMENTAL Y CRITERIO DE PARO ---
     st.header("4. Estado de Herramental y Cambios")
     col_h1, col_h2, col_h3 = st.columns(3)
 
@@ -94,7 +137,16 @@ with tab_captura:
         u_placa = st.selectbox("Unidad Placa", ["HITS", "MINUTOS"])
         u_rasqueta = st.selectbox("Unidad Rasqueta", ["HITS", "MINUTOS"])
 
-    st.error("⚠️ **CRITERIO DE PARO:** Bajar trabajo después de un tiempo o volumen límite sin V°B°.")
+    # CRITERIO DE PARO PERSONALIZADO
+    st.markdown('<div class="paro-box"><b>🛑 CRITERIO DE PARO DE MÁQUINA:</b> Establece los límites máximos para bajar el trabajo sin V°B°.</div>', unsafe_allow_html=True)
+    
+    col_p1, col_p2, col_p3 = st.columns(3)
+    with col_p1:
+        hits_limite = st.number_input("Bajar trabajo después de (Hits):", min_value=0, value=0, step=500)
+    with col_p2:
+        minutos_limite = st.number_input("O después de (Minutos sin V°B°):", min_value=0, value=0, step=5)
+    with col_p3:
+        accion_paro = st.selectbox("Acción al cumplir límite:", ["BAJAR TRABAJO", "NOTIFICAR SUPERVISOR", "ESPERAR AUTORIZACIÓN EXCEPCIONAL"])
 
     st.divider()
 
@@ -129,6 +181,9 @@ with tab_captura:
             "Textos": res_textos["Res_TEXTOS"],
             "Estado Placa": est_placa,
             "Estado Rasqueta": est_rasqueta,
+            "Límite Paro (Hits)": hits_limite,
+            "Límite Paro (Min)": minutos_limite,
+            "Acción Paro": accion_paro,
             **auth_data
         }
         st.session_state.registros.append(nuevo_registro)
@@ -138,11 +193,8 @@ with tab_registros:
     st.header("📊 Histórico de Registros de V°B°")
     if len(st.session_state.registros) > 0:
         df = pd.DataFrame(st.session_state.registros)
-        
-        # Muestra la tabla interactiva
         st.dataframe(df, use_container_width=True)
         
-        # Botón para descargar la lista en Excel / CSV
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📥 Descargar todos los registros a Excel (CSV)",
